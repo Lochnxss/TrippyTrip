@@ -24,7 +24,7 @@ if st.button("Find Me a Place") and zip_code:
     geo_req.raise_for_status()
     geo_res = geo_req.json()
        
-except Exception as e:
+    except Exception as e:
 
     st.error(f"ZIP code lookup failed: {e}")
     st.stop()
