@@ -12,7 +12,7 @@ try:
 except FileNotFoundError:
     log_df = pd.DataFrame(columns=["Name", "Address", "Lat", "Lon", "Visited", "Timestamp"])
 
-st.title("Food Randomizer - Prototype")
+st.title("The Grazing Trail")
 zip_code = st.text_input("Enter ZIP Code", "")
 keywords = st.text_input("Enter up to 3 keywords (comma separated)", "")
 
@@ -23,6 +23,7 @@ if st.button("Find Me a Place") and zip_code:
 
     if not geo_res:
         st.error("ZIP code not found. Try another.")
+        st.stop()
     else:
         lat = geo_res[0]["lat"]
         lon = geo_res[0]["lon"]
@@ -36,8 +37,13 @@ if st.button("Find Me a Place") and zip_code:
         );
         out center;
         """
-        res = requests.post("https://overpass-api.de/api/interpreter", data={"data": overpass_query})
-        data = res.json().get("elements", [])
+        try:
+            res = requests.post("https://overpass-api.de/api/interpreter", data={"data": overpass_query})
+            res.raise_for_status()
+            data = res.json().get("elements", [])
+        except Exception as e:
+            st.error(f"Failed to get data from Overpass API: {e}")
+            data = []
 
         filtered = []
         for place in data:
@@ -54,7 +60,7 @@ if st.button("Find Me a Place") and zip_code:
 
         if filtered:
             suggestion = random.choice(filtered)
-            st.subheader(f"Try this place:")
+            st.subheader("Try this place:")
             st.markdown(f"**{suggestion['Name']}**")
             st.markdown(f"Location: ({suggestion['Lat']}, {suggestion['Lon']})")
 
@@ -67,7 +73,7 @@ if st.button("Find Me a Place") and zip_code:
                     "Visited": True,
                     "Timestamp": datetime.now().isoformat()
                 }
-                log_df = log_df.append(new_entry, ignore_index=True)
+                log_df = pd.concat([log_df, pd.DataFrame([new_entry])], ignore_index=True)
                 log_df.to_csv(LOG_FILE, index=False)
                 st.success("Visit logged.")
         else:
