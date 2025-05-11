@@ -17,9 +17,19 @@ zip_code = st.text_input("Enter ZIP Code", "")
 keywords = st.text_input("Enter up to 3 keywords (comma separated)", "")
 
 if st.button("Find Me a Place") and zip_code:
-    geo_res = requests.get(
+   try:
+    geo_req = requests.get(
         f"https://nominatim.openstreetmap.org/search?postalcode={zip_code}&country=us&format=json"
-    ).json()
+    )
+    geo_req.raise_for_status()
+    geo_res = geo_req.json()
+except Exception as e:
+    st.error(f"ZIP code lookup failed: {e}")
+    st.stop()
+
+if not geo_res:
+    st.error("ZIP code not found. Try another.")
+    st.stop()
 
     if not geo_res:
         st.error("ZIP code not found. Try another.")
