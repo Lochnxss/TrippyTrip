@@ -1,11 +1,10 @@
-
 import streamlit as st
 import requests
 import random
 import pandas as pd
 from datetime import datetime
-OPENCAGE_API_KEY = "14334e30b2f64ed991640bbf6d1aacff"
 
+OPENCAGE_API_KEY = "14334e30b2f64ed991640bbf6d1aacff"
 LOG_FILE = "visit_log.csv"
 
 try:
@@ -17,30 +16,24 @@ st.title("The Grazing Trail")
 zip_code = st.text_input("Enter ZIP Code", "")
 keywords = st.text_input("Enter up to 3 keywords (comma separated)", "")
 
-try:
-    geo_req = requests.get(
-        f"https://api.opencagedata.com/geocode/v1/json?q={zip_code}&key={OPENCAGE_API_KEY}&countrycode=us&limit=1"
-    )
-    geo_req.raise_for_status()
-    geo_res = geo_req.json()
-except Exception as e:
-    st.error(f"ZIP code lookup failed: {e}")
-    st.stop()
-
-if not geo_res["results"]:
-    st.error("ZIP code not found or blocked. Try a nearby ZIP.")
-    st.stop()
-
-coords = geo_res["results"][0]["geometry"]
-lat = coords["lat"]
-lon = coords["lng"]
-
-    if not geo_res:
-        st.error("ZIP code not found. Try another.")
+if st.button("Find Me a Place") and zip_code:
+    try:
+        geo_req = requests.get(
+            f"https://api.opencagedata.com/geocode/v1/json?q={zip_code}&key={OPENCAGE_API_KEY}&countrycode=us&limit=1"
+        )
+        geo_req.raise_for_status()
+        geo_res = geo_req.json()
+    except Exception as e:
+        st.error(f"ZIP code lookup failed: {e}")
         st.stop()
 
-    lat = geo_res[0]["lat"]
-    lon = geo_res[0]["lon"]
+    if not geo_res["results"]:
+        st.error("ZIP code not found or blocked. Try a nearby ZIP.")
+        st.stop()
+
+    coords = geo_res["results"][0]["geometry"]
+    lat = coords["lat"]
+    lon = coords["lng"]
 
     tags = "|".join([kw.strip() for kw in keywords.split(",") if kw.strip()])
     filter_enabled = bool(tags)
