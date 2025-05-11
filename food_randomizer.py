@@ -1,4 +1,3 @@
-
 import streamlit as st
 import requests
 import random
@@ -17,21 +16,9 @@ zip_code = st.text_input("Enter ZIP Code", "")
 keywords = st.text_input("Enter up to 3 keywords (comma separated)", "")
 
 if st.button("Find Me a Place") and zip_code:
-   try:
-    geo_req = requests.get(
+    geo_res = requests.get(
         f"https://nominatim.openstreetmap.org/search?postalcode={zip_code}&country=us&format=json"
-    )
-    geo_req.raise_for_status()
-    geo_res = geo_req.json()
-       
-   except Exception as e:
-
-    st.error(f"ZIP code lookup failed: {e}")
-    st.stop()
-
-if not geo_res:
-    st.error("ZIP code not found. Try another.")
-    st.stop()
+    ).json()
 
     if not geo_res:
         st.error("ZIP code not found. Try another.")
