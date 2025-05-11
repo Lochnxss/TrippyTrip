@@ -1,3 +1,4 @@
+
 import streamlit as st
 import requests
 import random
@@ -23,74 +24,71 @@ if st.button("Find Me a Place") and zip_code:
         )
         geo_req.raise_for_status()
         geo_res = geo_req.json()
-    except Exception as e:
-        st.error(f"ZIP code lookup failed: {e}")
-        st.stop()
 
-    if not geo_res["results"]:
-        st.error("ZIP code not found or blocked. Try a nearby ZIP.")
-        st.stop()
+        if not geo_res["results"]:
+            st.error("ZIP code not found or blocked. Try a nearby ZIP.")
+            st.stop()
 
-    coords = geo_res["results"][0]["geometry"]
-    lat = coords["lat"]
-    lon = coords["lng"]
+        coords = geo_res["results"][0]["geometry"]
+        lat = coords["lat"]
+        lon = coords["lng"]
 
-    tags = "|".join([kw.strip() for kw in keywords.split(",") if kw.strip()])
-    filter_enabled = bool(tags)
+        tags = "|".join([kw.strip() for kw in keywords.split(",") if kw.strip()])
+        filter_enabled = bool(tags)
 
-    overpass_query = f"""
-    [out:json][timeout:25];
-    (
-      node["amenity"~"restaurant|bar|pub"](around:5000,{lat},{lon});
-      way["amenity"~"restaurant|bar|pub"](around:5000,{lat},{lon});
-      relation["amenity"~"restaurant|bar|pub"](around:5000,{lat},{lon});
-    );
-    out center;
-    """
+        overpass_query = f"""
+        [out:json][timeout:25];
+        (
+          node["amenity"~"restaurant|bar|pub"](around:5000,{lat},{lon});
+          way["amenity"~"restaurant|bar|pub"](around:5000,{lat},{lon});
+          relation["amenity"~"restaurant|bar|pub"](around:5000,{lat},{lon});
+        );
+        out center;
+        """
 
-    try:
         res = requests.post("https://overpass-api.de/api/interpreter", data={"data": overpass_query})
         res.raise_for_status()
         data = res.json().get("elements", [])
-    except Exception as e:
-        st.error(f"Failed to get data from Overpass API: {e}")
-        data = []
 
-    filtered = []
-    for place in data:
-        name = place.get("tags", {}).get("name", "")
-        if not name:
-            continue
-
-        if filter_enabled:
-            if not any(kw.lower() in name.lower() for kw in tags.split("|")):
+        filtered = []
+        for place in data:
+            name = place.get("tags", {}).get("name", "")
+            if not name:
                 continue
 
-        lat = place.get("lat") or place.get("center", {}).get("lat")
-        lon = place.get("lon") or place.get("center", {}).get("lon")
-        address = place.get("tags", {}).get("addr:full", "Unknown")
-        filtered.append({"Name": name, "Address": address, "Lat": lat, "Lon": lon})
+            if filter_enabled:
+                if not any(kw.lower() in name.lower() for kw in tags.split("|")):
+                    continue
 
-    if filtered:
-        suggestion = random.choice(filtered)
-        st.subheader("Try this place:")
-        st.markdown(f"**{suggestion['Name']}**")
-        st.markdown(f"Location: ({suggestion['Lat']}, {suggestion['Lon']})")
+            lat = place.get("lat") or place.get("center", {}).get("lat")
+            lon = place.get("lon") or place.get("center", {}).get("lon")
+            address = place.get("tags", {}).get("addr:full", "Unknown")
+            filtered.append({"Name": name, "Address": address, "Lat": lat, "Lon": lon})
 
-        if st.button("Mark as Visited"):
-            new_entry = {
-                "Name": suggestion["Name"],
-                "Address": suggestion["Address"],
-                "Lat": suggestion["Lat"],
-                "Lon": suggestion["Lon"],
-                "Visited": True,
-                "Timestamp": datetime.now().isoformat()
-            }
-            log_df = pd.concat([log_df, pd.DataFrame([new_entry])], ignore_index=True)
-            log_df.to_csv(LOG_FILE, index=False)
-            st.success("Visit logged.")
-    else:
-        st.warning("No matching places found. Try adjusting keywords.")
+        if filtered:
+            suggestion = random.choice(filtered)
+            st.subheader("Try this place:")
+            st.markdown(f"**{suggestion['Name']}**")
+            st.markdown(f"Location: ({suggestion['Lat']}, {suggestion['Lon']})")
+
+            if st.button("Mark as Visited"):
+                new_entry = {
+                    "Name": suggestion["Name"],
+                    "Address": suggestion["Address"],
+                    "Lat": suggestion["Lat"],
+                    "Lon": suggestion["Lon"],
+                    "Visited": True,
+                    "Timestamp": datetime.now().isoformat()
+                }
+                log_df = pd.concat([log_df, pd.DataFrame([new_entry])], ignore_index=True)
+                log_df.to_csv(LOG_FILE, index=False)
+                st.success("Visit logged.")
+        else:
+            st.warning("No matching places found. Try adjusting keywords.")
+
+    except Exception as e:
+        st.error(f"Something went wrong: {e}")
+        st.stop()
 
 if not log_df.empty:
     st.markdown("### Visit Log")
