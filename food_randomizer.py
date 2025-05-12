@@ -4,9 +4,9 @@ import random
 import pandas as pd
 from datetime import datetime
 
+OPENCAGE_API_KEY = "14334e30b2f64ed991640bbf6d1aacff"
 LOG_FILE = "visit_log.csv"
 
-# Try loading the visit log, or create an empty one
 try:
     log_df = pd.read_csv(LOG_FILE)
 except FileNotFoundError:
@@ -17,11 +17,9 @@ zip_code = st.text_input("Enter ZIP Code", "")
 keywords = st.text_input("Enter up to 3 keywords (comma separated)", "")
 
 if st.button("Find Me a Place") and zip_code:
-    # --- ZIP Code to Coordinates ---
     try:
         geo_req = requests.get(
-            f"https://nominatim.openstreetmap.org/search?postalcode={zip_code}&country=us&format=json",
-            headers={"User-Agent": "TheGrazingTrail/1.0 (you@example.com)"}
+            f"https://api.opencagedata.com/geocode/v1/json?q={zip_code}&key={OPENCAGE_API_KEY}&countrycode=us&limit=1"
         )
         geo_req.raise_for_status()
         geo_res = geo_req.json()
@@ -29,15 +27,17 @@ if st.button("Find Me a Place") and zip_code:
         st.error(f"ZIP code lookup failed: {e}")
         st.stop()
 
-    if not geo_res:
-        st.error("ZIP code not found. Try another.")
+    if not geo_res["results"]:
+        st.error("ZIP code not found or blocked. Try a nearby ZIP.")
         st.stop()
 
-    lat = geo_res[0]["lat"]
-    lon = geo_res[0]["lon"]
+    coords = geo_res["results"][0]["geometry"]
+    lat = coords["lat"]
+    lon = coords["lng"]
 
-    # --- Build Overpass Query ---
     tags = "|".join([kw.strip() for kw in keywords.split(",") if kw.strip()])
+    filter_enabled = bool(tags)
+
     overpass_query = f"""
     [out:json][timeout:25];
     (
@@ -56,22 +56,20 @@ if st.button("Find Me a Place") and zip_code:
         st.error(f"Failed to get data from Overpass API: {e}")
         data = []
 
-    # --- Filter and Suggest Place ---
     filtered = []
-for place in data:
-    name = place.get("tags", {}).get("name", "")
-    if not name:
-        continue
-
-    # If keywords were given, filter by them
-    if tags:
-        if not any(kw.lower() in name.lower() for kw in tags.split("|")):
+    for place in data:
+        name = place.get("tags", {}).get("name", "")
+        if not name:
             continue
 
-    lat = place.get("lat") or place.get("center", {}).get("lat")
-    lon = place.get("lon") or place.get("center", {}).get("lon")
-    address = place.get("tags", {}).get("addr:full", "Unknown")
-    filtered.append({"Name": name, "Address": address, "Lat": lat, "Lon": lon})
+        if filter_enabled:
+            if not any(kw.lower() in name.lower() for kw in tags.split("|")):
+                continue
+
+        lat = place.get("lat") or place.get("center", {}).get("lat")
+        lon = place.get("lon") or place.get("center", {}).get("lon")
+        address = place.get("tags", {}).get("addr:full", "Unknown")
+        filtered.append({"Name": name, "Address": address, "Lat": lat, "Lon": lon})
 
     if filtered:
         suggestion = random.choice(filtered)
@@ -94,7 +92,6 @@ for place in data:
     else:
         st.warning("No matching places found. Try adjusting keywords.")
 
-# --- Show Visit Log ---
 if not log_df.empty:
     st.markdown("### Visit Log")
     st.dataframe(log_df)
