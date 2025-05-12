@@ -32,8 +32,8 @@ try:
 except FileNotFoundError:
     log_df = pd.DataFrame(columns=["Name", "Address", "Lat", "Lon", "Visited", "Timestamp"])
 
-# Show Bigfoot header
-st.image("https://i.imgur.com/fOIX5F3.png", width=200)  # Public image link for Bigfoot
+# Show Bigfoot image
+st.image("https://i.ibb.co/vH6zK2Y/bigfoot-walk.png", width=200)
 
 st.title("The Grazing Trail")
 zip_code = st.text_input("Enter ZIP Code", "")
@@ -41,7 +41,7 @@ keywords = st.text_input("Enter up to 3 keywords (comma separated)", "")
 
 if st.button("Find Me a Place") and zip_code:
     with st.spinner("Bigfoot is searching for delicious terrain..."):
-        time.sleep(1.5)  # simulate loading
+        time.sleep(1.5)
 
     try:
         geo_req = requests.get(
