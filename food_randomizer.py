@@ -55,7 +55,7 @@ with tab1:
 
     if st.button("Find Me a Place") and zip_code:
         with st.spinner("Bigfoot is scouting your trail..."):
-            st.image("bigfoot_backdrop.png", use_column_width=True)
+            st.image("bigfoot_backdrop.png", use_container_width=True)
             time.sleep(3)
 
         try:
