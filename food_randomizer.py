@@ -20,7 +20,7 @@ st.set_page_config(page_title="The Grazing Trail", layout="wide")
                    
 # Semi-transparent forest backdrop
 """st.markdown("""
-    <style>
+  <style>
     body::before {
         content: "";
         position: fixed;
