@@ -19,7 +19,7 @@ from hashlib import sha256
 st.set_page_config(page_title="The Grazing Trail", layout="wide")
 
 # Semi-transparent forest backdrop
-st.markdown("""
+st.markdown("
     <style>
     body::before {
         content: "";
@@ -50,21 +50,21 @@ st.markdown("""
         z-index: 9999;
     }
     </style>
-""", unsafe_allow_html=True)
+", unsafe_allow_html=True)
 
 # Initialize DB
 conn = sqlite3.connect("grazing_trail.db", check_same_thread=False)
 cur = conn.cursor()
 
-cur.execute("""
+cur.execute("
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE,
         password TEXT
     )
-""")
+")
 
-cur.execute("""
+cur.execute("
     CREATE TABLE IF NOT EXISTS visits (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER,
@@ -73,7 +73,7 @@ cur.execute("""
         lon REAL,
         timestamp TEXT
     )
-""")
+")
 
 conn.commit()
 
