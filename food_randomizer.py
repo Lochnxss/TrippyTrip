@@ -17,10 +17,11 @@ from datetime import datetime
 from hashlib import sha256
 
 st.set_page_config(page_title="The Grazing Trail", layout="wide")
-                   
+
+"""
 # Semi-transparent forest backdrop
-"""st.markdown("""
-  <style>
+st.markdown("""
+    <style>
     body::before {
         content: "";
         position: fixed;
@@ -38,13 +39,7 @@ st.set_page_config(page_title="The Grazing Trail", layout="wide")
     .chyron {
         position: fixed;
         bottom: 0;
-        width: 100%;
-        background: rgba(0,0,0,0.7);
-        color: #fff;
-        padding: 5px 20px;
-        font-size: 14px;
-        white-space: nowrap;
-        overflow: 
+        
 
 # Initialize DB
 conn = sqlite3.connect("grazing_trail.db", check_same_thread=False)
@@ -67,7 +62,7 @@ cur.execute("""
         lon REAL,
         timestamp TEXT
     )
-""")"""
+""")
 
 conn.commit()
 
