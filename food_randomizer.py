@@ -1,5 +1,5 @@
-# Full updated version of food_randomizer.py with enhanced keyword matching across name, cuisine, and description
-enhanced_keyword_code = 
+# Final full version of food_randomizer.py with intelligent keyword intent mapping
+intent_mapped_code = 
 import streamlit as st
 import requests
 import random
@@ -8,6 +8,21 @@ from datetime import datetime
 
 OPENCAGE_API_KEY = "14334e30b2f64ed991640bbf6d1aacff"
 LOG_FILE = "visit_log.csv"
+
+intent_map = {
+    "pancake": ["pancake", "breakfast", "diner", "waffle", "ihop", "griddle"],
+    "steak": ["steak", "steakhouse", "bbq", "grill", "roadhouse", "outback"],
+    "burger": ["burger", "grill", "diner", "fast food", "five guys", "wendy's", "mcdonald", "whopper"],
+    "pizza": ["pizza", "pizzeria", "italian", "domino", "papa john", "little caesar"],
+    "sushi": ["sushi", "japanese", "hibachi", "miso", "ramen", "bento"],
+    "chicken": ["chicken", "fried", "kfc", "popeyes", "nashville", "hot"],
+    "taco": ["taco", "mexican", "taqueria", "chipotle", "burrito", "quesadilla"],
+    "seafood": ["seafood", "shrimp", "crab", "fish", "lobster", "clam", "oyster"],
+    "coffee": ["coffee", "cafe", "espresso", "latte", "starbucks", "java", "brew"],
+    "salad": ["salad", "healthy", "greens", "vegetarian", "vegan", "bowl"],
+    "bbq": ["bbq", "barbecue", "smokehouse", "ribs", "brisket", "pit"],
+    "dessert": ["dessert", "ice cream", "sweet", "bakery", "donut", "cake", "pie"]
+}
 
 try:
     log_df = pd.read_csv(LOG_FILE)
@@ -34,8 +49,13 @@ if st.button("Find Me a Place") and zip_code:
         lat = coords["lat"]
         lon = coords["lng"]
 
-        tags = "|".join([kw.strip() for kw in keywords.split(",") if kw.strip()])
-        filter_enabled = bool(tags)
+        # Expand keywords using the intent map
+        raw_keywords = [kw.strip().lower() for kw in keywords.split(",") if kw.strip()]
+        expanded_terms = set()
+        for kw in raw_keywords:
+            expanded_terms.update(intent_map.get(kw, [kw]))
+
+        filter_enabled = bool(expanded_terms)
 
         overpass_query = f\"\"\"
         [out:json][timeout:25];
@@ -64,7 +84,7 @@ if st.button("Find Me a Place") and zip_code:
             search_fields = f"{name} {cuisine} {description}".lower()
 
             if filter_enabled:
-                if not any(kw.lower() in search_fields for kw in tags.split("|")):
+                if not any(term in search_fields for term in expanded_terms):
                     continue
 
             lat = place.get("lat") or place.get("center", {}).get("lat")
@@ -91,7 +111,7 @@ if st.button("Find Me a Place") and zip_code:
                 log_df.to_csv(LOG_FILE, index=False)
                 st.success("Visit logged.")
         else:
-            st.warning("No matching places found. Try adjusting keywords.")
+            st.warning("No matching places found. Try broadening your search.")
 
     except Exception as e:
         st.error(f"Something went wrong: {e}")
@@ -101,9 +121,9 @@ if not log_df.empty:
     st.markdown("### Visit Log")
     st.dataframe(log_df)
 
-# Save the enhanced version
-enhanced_file_path = "/mnt/data/food_randomizer.py"
-with open(enhanced_file_path, "w") as f:
-    f.write(enhanced_keyword_code)
 
-enhanced_file_path
+intent_file_path = "/mnt/data/food_randomizer.py"
+with open(intent_file_path, "w") as f:
+    f.write(intent_mapped_code)
+
+intent_file_path
