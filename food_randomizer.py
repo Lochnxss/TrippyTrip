@@ -19,7 +19,7 @@ from hashlib import sha256
 st.set_page_config(page_title="The Grazing Trail", layout="wide")
                    
 # Semi-transparent forest backdrop
-st.markdown("""
+"""st.markdown("""
     <style>
     body::before {
         content: "";
@@ -27,7 +27,7 @@ st.markdown("""
         top: 0; left: 0;
         width: 100vw; height: 100vh;
         background: url('https://i.imgur.com/rUJzGvc.png') center/cover no-repeat;
-        opacity: 0
+        opacity: 0.1
     }
     .glow {
         background-color: #222;
@@ -44,12 +44,7 @@ st.markdown("""
         padding: 5px 20px;
         font-size: 14px;
         white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        z-index: 9999;
-    }
-    </style>
-""", unsafe_allow_html=True)
+        overflow: 
 
 # Initialize DB
 conn = sqlite3.connect("grazing_trail.db", check_same_thread=False)
@@ -72,7 +67,7 @@ cur.execute("""
         lon REAL,
         timestamp TEXT
     )
-""")
+""")"""
 
 conn.commit()
 
