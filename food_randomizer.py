@@ -27,7 +27,7 @@ st.markdown("""
         top: 0; left: 0;
         width: 100vw; height: 100vh;
         background: url('https://i.imgur.com/rUJzGvc.png') center/cover no-repeat;
-        opacity: 0.3;
+        opacity: 0.1;
     }
     .glow {
         background-color: #222;
