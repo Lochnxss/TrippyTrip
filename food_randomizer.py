@@ -16,8 +16,8 @@ import time
 from datetime import datetime
 from hashlib import sha256
 
-st.set_page_config(page_title="The Grazing Trail", layout="wide")
-st.write."apploaded"
+st.set_page_config(page_title="The Grazing Trail", layout="wide"
+                   
 # Semi-transparent forest backdrop
 st.markdown("""
     <style>
