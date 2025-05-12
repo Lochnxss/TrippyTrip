@@ -19,7 +19,7 @@ from hashlib import sha256
 st.set_page_config(page_title="The Grazing Trail", layout="wide")
 
 # Semi-transparent forest backdrop
-st.markdown("
+st.markdown(""
     <style>
     body::before {
         content: "";
@@ -50,7 +50,7 @@ st.markdown("
         z-index: 9999;
     }
     </style>
-", unsafe_allow_html=True)
+"", unsafe_allow_html=True)
 
 # Initialize DB
 conn = sqlite3.connect("grazing_trail.db", check_same_thread=False)
