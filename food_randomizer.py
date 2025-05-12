@@ -37,7 +37,7 @@ try:
 except FileNotFoundError:
     log_df = pd.DataFrame(columns=["Name", "Address", "Lat", "Lon", "Visited", "Timestamp"])
 
-st.image("bigfoot_walk.png", width=200)  # Main header image
+st.image("", width=200)  # Main header image
 
 st.title("The Grazing Trail")
 zip_code = st.text_input("Enter ZIP Code", "")
