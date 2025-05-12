@@ -54,7 +54,7 @@ if st.session_state.stage == "form":
 
 # LOADING screen
 if st.session_state.stage == "loading":
-    st.image("bigfoot_backdrop.png", use_column_width=True)
+    st.image("bigfoot_backdrop.png", use_container_width=True)
     st.markdown("### Bigfoot is scouting your trail...")
     st.markdown("_(Hang tight, he's sniffing out something tasty...)_")
     time.sleep(3.5)
