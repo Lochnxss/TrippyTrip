@@ -58,17 +58,20 @@ if st.button("Find Me a Place") and zip_code:
 
     # --- Filter and Suggest Place ---
     filtered = []
-    for place in data:
-        name = place.get("tags", {}).get("name", "")
-        if not name:
+for place in data:
+    name = place.get("tags", {}).get("name", "")
+    if not name:
+        continue
+
+    # If keywords were given, filter by them
+    if tags:
+        if not any(kw.lower() in name.lower() for kw in tags.split("|")):
             continue
-        if tags:
-            if not any(kw.lower() in name.lower() for kw in tags.split("|")):
-                continue
-        lat = place.get("lat") or place.get("center", {}).get("lat")
-        lon = place.get("lon") or place.get("center", {}).get("lon")
-        address = place.get("tags", {}).get("addr:full", "Unknown")
-        filtered.append({"Name": name, "Address": address, "Lat": lat, "Lon": lon})
+
+    lat = place.get("lat") or place.get("center", {}).get("lat")
+    lon = place.get("lon") or place.get("center", {}).get("lon")
+    address = place.get("tags", {}).get("addr:full", "Unknown")
+    filtered.append({"Name": name, "Address": address, "Lat": lat, "Lon": lon})
 
     if filtered:
         suggestion = random.choice(filtered)
