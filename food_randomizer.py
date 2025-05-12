@@ -5,12 +5,12 @@ import random
 import pandas as pd
 from datetime import datetime
 import time
+import os
 
 st.set_page_config(page_title="The Grazing Trail", layout="wide")
 
 OPENCAGE_API_KEY = "14334e30b2f64ed991640bbf6d1aacff"
 LOG_FILE = "visit_log.csv"
-USER_HISTORY_FILE = "user_history.csv"
 
 def normalize(word):
     word = word.lower().strip()
@@ -31,32 +31,38 @@ intent_map = {
     "dessert": ["dessert", "ice cream", "sweet", "bakery", "donut", "cake", "pie"]
 }
 
+# Load logs
 try:
     log_df = pd.read_csv(LOG_FILE)
 except FileNotFoundError:
-    log_df = pd.DataFrame(columns=["Name", "Address", "Lat", "Lon", "Visited", "Timestamp"])
+    log_df = pd.DataFrame(columns=["User", "Name", "Address", "Lat", "Lon", "Visited", "Timestamp"])
 
+# Session State
 if "user" not in st.session_state:
     st.session_state.user = ""
-
 if "last_result" not in st.session_state:
     st.session_state.last_result = {}
 
-tab1, tab2 = st.tabs(["Trail Start", "My Trail"])
+# Tabs
+tab1, tab2, tab3 = st.tabs(["Trail Start", "My Trail", "Leaderboard"])
 
-# Trail Start tab (search screen)
+# TAB 1: TRAIL START
 with tab1:
     st.image("bigfoot_walk.png", width=200)
     st.title("The Grazing Trail")
 
-    st.text_input("Enter Your Trail Name (Login)", key="user")
-    zip_code = st.text_input("Enter ZIP Code", "")
-    keywords = st.text_input("Enter up to 3 keywords (comma separated)", "")
+    user = st.text_input("Enter Your Trail Name (Login)", key="user_input")
+    if user:
+        st.session_state.user = user.strip()
 
-    if st.button("Find Me a Place") and zip_code:
-        with st.spinner("Bigfoot is scouting your trail..."):
-            st.image("bigfoot_backdrop.png", use_container_width=True)
-            time.sleep(3)
+    zip_code = st.text_input("Enter ZIP Code")
+    keywords = st.text_input("Enter up to 3 keywords (comma separated)")
+
+    if st.button("Find Me a Place") and zip_code and st.session_state.user:
+        st.image("bigfoot_backdrop.png", use_container_width=True)
+        st.markdown("### Bigfoot is scouting your trail...")
+        st.markdown("_(Hang tight, he's sniffing out something tasty...)_")
+        time.sleep(3)
 
         try:
             geo_req = requests.get(
@@ -94,6 +100,8 @@ with tab1:
             res.raise_for_status()
             data = res.json().get("elements", [])
 
+            visited_places = log_df[log_df["User"] == st.session_state.user]["Name"].tolist()
+
             filtered = []
             for place in data:
                 tags_dict = place.get("tags", {})
@@ -101,15 +109,14 @@ with tab1:
                 cuisine = tags_dict.get("cuisine", "")
                 description = tags_dict.get("description", "")
 
-                if not name:
+                if not name or name in visited_places:
                     continue
 
                 search_fields = f"{name} {cuisine} {description}".lower()
                 search_words = [normalize(word) for word in search_fields.split()]
 
-                if filter_enabled:
-                    if not any(term in search_words for term in expanded_terms):
-                        continue
+                if filter_enabled and not any(term in search_words for term in expanded_terms):
+                    continue
 
                 lat = place.get("lat") or place.get("center", {}).get("lat")
                 lon = place.get("lon") or place.get("center", {}).get("lon")
@@ -120,12 +127,12 @@ with tab1:
                 st.session_state.last_result = random.choice(filtered)
                 st.success("Trail found! Head to the 'My Trail' tab to see your next stop.")
             else:
-                st.warning("No matching places found.")
+                st.warning("No new matching places found. Try a new keyword or area.")
 
         except Exception as e:
             st.error(f"Search failed: {e}")
 
-# My Trail tab (shows result and eventually user history)
+# TAB 2: MY TRAIL
 with tab2:
     st.header("Welcome to your Trail, " + (st.session_state.user or "Guest"))
 
@@ -137,6 +144,7 @@ with tab2:
 
         if st.button("Mark as Visited"):
             new_entry = {
+                "User": st.session_state.user,
                 "Name": result["Name"],
                 "Address": result["Address"],
                 "Lat": result["Lat"],
@@ -146,10 +154,26 @@ with tab2:
             }
             log_df = pd.concat([log_df, pd.DataFrame([new_entry])], ignore_index=True)
             log_df.to_csv(LOG_FILE, index=False)
-            st.success("Trail mark logged.")
+            st.success("Visit logged.")
             st.session_state.last_result = {}
 
     st.markdown("---")
     if not log_df.empty:
-        st.subheader("Your Visit Log")
-        st.dataframe(log_df)
+        user_logs = log_df[log_df["User"] == st.session_state.user]
+        if not user_logs.empty:
+            st.subheader("Your Visit Log")
+            st.dataframe(user_logs)
+
+# TAB 3: LEADERBOARD
+with tab3:
+    st.header("Trail Leaderboard")
+    if not log_df.empty:
+        leaderboard = (
+            log_df.groupby("User")
+            .size()
+            .reset_index(name="Total Visits")
+            .sort_values(by="Total Visits", ascending=False)
+        )
+        st.dataframe(leaderboard)
+    else:
+        st.info("No visits logged yet!")
