@@ -46,7 +46,7 @@ keywords = st.text_input("Enter up to 3 keywords (comma separated)", "")
 if st.button("Find Me a Place") and zip_code:
     # Bigfoot-style backdrop before loading results
     with st.spinner("Bigfoot is tracking delicious prey..."):
-        st.image("bigfoot_backdrop.png", use_column_width=True)
+        st.image("bigfoot_loading_screen.png", use_column_width=True)
         time.sleep(1.5)
 
     try:
