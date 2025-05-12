@@ -35,43 +35,35 @@ try:
 except FileNotFoundError:
     log_df = pd.DataFrame(columns=["Name", "Address", "Lat", "Lon", "Visited", "Timestamp"])
 
-# AD BOXES
-st.markdown("""
-<style>
-.ad-top-left, .ad-top-right, .ad-bottom-left, .ad-bottom-right {
-    position: fixed;
-    background: #f8f8f8;
-    padding: 6px 10px;
-    z-index: 9999;
-    font-size: 12px;
-    font-weight: bold;
-    border: 1px solid #ddd;
-    box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
-    opacity: 0.9;
-}
-.ad-top-left { top: 5px; left: 5px; }
-.ad-top-right { top: 5px; right: 5px; }
-.ad-bottom-left { bottom: 5px; left: 5px; }
-.ad-bottom-right { bottom: 5px; right: 5px; }
-</style>
-<div class="ad-top-left">[AD] Eat Local</div>
-<div class="ad-top-right">[AD] Bigfoot's Burgers</div>
-<div class="ad-bottom-left">[AD] Trail Mix Deals</div>
-<div class="ad-bottom-right">[AD] Hike & Bite App</div>
-""", unsafe_allow_html=True)
+# State tracking
+if "stage" not in st.session_state:
+    st.session_state.stage = "form"
+if "last_result" not in st.session_state:
+    st.session_state.last_result = {}
 
-st.image("bigfoot_walk.png", width=200)
-st.title("The Grazing Trail")
+# FORM screen
+if st.session_state.stage == "form":
+    st.image("bigfoot_walk.png", width=200)
+    st.title("The Grazing Trail")
+    zip_code = st.text_input("Enter ZIP Code", "")
+    keywords = st.text_input("Enter up to 3 keywords (comma separated)", "")
+    if st.button("Find Me a Place") and zip_code:
+        st.session_state.zip_code = zip_code
+        st.session_state.keywords = keywords
+        st.session_state.stage = "loading"
 
-zip_code = st.text_input("Enter ZIP Code", "")
-keywords = st.text_input("Enter up to 3 keywords (comma separated)", "")
-
-if st.button("Find Me a Place") and zip_code:
-    st.markdown("## Bigfoot is scouting your trail...")
+# LOADING screen
+if st.session_state.stage == "loading":
     st.image("bigfoot_backdrop.png", use_column_width=True)
+    st.markdown("### Bigfoot is scouting your trail...")
     st.markdown("_(Hang tight, he's sniffing out something tasty...)_")
     time.sleep(3.5)
+    st.session_state.stage = "result"
 
+# RESULT screen
+if st.session_state.stage == "result":
+    zip_code = st.session_state.zip_code
+    keywords = st.session_state.keywords
     try:
         geo_req = requests.get(
             f"https://api.opencagedata.com/geocode/v1/json?q={zip_code}&key={OPENCAGE_API_KEY}&countrycode=us&limit=1"
@@ -81,6 +73,7 @@ if st.button("Find Me a Place") and zip_code:
 
         if not geo_res["results"]:
             st.error("ZIP code not found or blocked. Try a nearby ZIP.")
+            st.session_state.stage = "form"
             st.stop()
 
         coords = geo_res["results"][0]["geometry"]
@@ -132,6 +125,7 @@ if st.button("Find Me a Place") and zip_code:
 
         if filtered:
             suggestion = random.choice(filtered)
+            st.session_state.last_result = suggestion
             st.subheader("Try this place:")
             st.markdown(f"**{suggestion['Name']}**")
             st.markdown(f"Location: ({suggestion['Lat']}, {suggestion['Lon']})")
@@ -148,12 +142,14 @@ if st.button("Find Me a Place") and zip_code:
                 log_df = pd.concat([log_df, pd.DataFrame([new_entry])], ignore_index=True)
                 log_df.to_csv(LOG_FILE, index=False)
                 st.success("Visit logged.")
+                st.session_state.stage = "form"
         else:
             st.warning("No matching places found. Try broadening your search.")
+            st.session_state.stage = "form"
 
     except Exception as e:
         st.error(f"Something went wrong: {e}")
-        st.stop()
+        st.session_state.stage = "form"
 
 if not log_df.empty:
     st.markdown("### Visit Log")
